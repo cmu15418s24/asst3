@@ -183,3 +183,9 @@ int main(int argc, char *argv[]) {
   print_stats(occupancy);
   write_output(wires, num_wires, occupancy, dim_x, dim_y, num_threads, input_filename);
 }
+
+validate_wire_t Wire::to_validate_format(void) const {
+  /* TODO(student): Implement this if you want to use the wr_checker. */
+  /* See wireroute.h for details on validate_wire_t. */
+  return validate_wire_t{};
+}
