@@ -3,6 +3,18 @@
 #include <stdio.h>
 #include <assert.h>
 
+void validate_wire_t::print_wire() const {
+  for (int i = 0; i < num_pts; i++) 
+  {
+    printf("[%u %u]", p[i].x, p[i].y);
+    if (i != num_pts - 1) {
+      printf(" -> ");
+    } else {
+      printf("\n");
+    }
+  }
+}
+
 validate_wire_t &validate_wire_t::cleanup(void) {
   /* Sort points by x-values */
   std::sort(p, p + num_pts, [](auto &a, auto &b) {
@@ -24,14 +36,21 @@ validate_wire_t &validate_wire_t::cleanup(void) {
     if (p[0].y == p[3].y) {
       std::swap(p[0], p[1]);
       std::swap(p[2], p[3]);
-    } else if (p[1].x == p[2].x) {
+    } else if (p[0].y == p[2].y) {
       std::swap(p[1], p[2]);
     }
   } else if (num_pts == 3) {
-    if (p[1].x == p[2].x) {
+    if (p[1].x == p[2].x && p[0].y != p[1].y) {
       std::swap(p[1], p[2]);
-    } else if (p[0].x == p[1].x) {
+    } else if (p[0].x == p[1].x && p[1].y != p[2].y) {
       std::swap(p[0], p[1]);
+    }
+  }
+  for (int i = 0; i < num_pts - 1; i++) {
+    if (!(p[i].x == p[i + 1].x || p[i].y == p[i + 1].y)) [[unlikely]] {
+      printf("cleanup: Created bad wire: ");
+      print_wire();
+      abort();
     }
   }
   return *this;
@@ -45,7 +64,7 @@ void wr_checker::validate() const {
     validate_wire_t wire = w.to_validate_format().cleanup();
 
     const auto &pts = wire.p;
-    // Fill cost matrix
+    // Fill occupancy matrix
     int cur_point = 0;
     do {
       int x = pts[cur_point].x;
@@ -71,7 +90,7 @@ void wr_checker::validate() const {
     for (int j = 0; j < dim_x; j++) {
       if (occ_computed[i][j] != occupancies[i][j]) {
         if (total++ < COST_REPORT_DEPTH)
-          printf("Cost Array: Values mismatch at (%d, %d)\n", j, i);
+          printf("Occupancy Matrix: Values mismatch at (%d, %d)\n", j, i);
       }
     }
   }

@@ -1,4 +1,4 @@
-# /bin/python
+#!/usr/bin/python3
 import logging
 import sys
 
@@ -20,10 +20,10 @@ optional arguments:
 def parse_args():
     args = sys.argv
     if '-h' in args or '--help' in args:
-        print help_message
+        print (help_message)
         sys.exit(1)
     if '-r' not in args or '-c' not in args:
-        print help_message
+        print (help_message)
         sys.exit(1)
     parsed = {}
     parsed['route'] = args[args.index('-r') + 1]
@@ -50,7 +50,7 @@ def validate(args):
     dim = lines[0].split()
     m, n = int(dim[0]), int(dim[1])
     wires = int(lines[1])
-    print m, n, wires
+    print (m, n, wires)
     #LOG.info('rows({}), cols({}), wires({})'.format(m, n, wires))
     if len(lines) != wires + 2:
         LOG.error('Route : Expected # of wires {}, Actual # of wires {}'.
@@ -60,11 +60,11 @@ def validate(args):
     for i in range(2, len(lines)):
         wire = lines[i]
         path = map(int, wire.split())
-        if len(path) % 2 != 0:
+        if len(list(path)) % 2 != 0:
             LOG.error('Route: end points doesn\'t come in pairs in line {}'.
                       format(i + 2))
             return False
-        points = [(path[2 * i], path[2 * i + 1]) for i in range(len(path) / 2)]
+        points = [(path[2 * i], path[2 * i + 1]) for i in range(len(list(path)) // 2)]
         for j in range(len(points) - 1):
             add_cost(cost_array, points[j], points[j + 1])
             # remove the cost of the bending end points
@@ -85,11 +85,11 @@ def validate(args):
     for i in range(1, len(lines)):
         line = map(int, lines[i].split())
         # check # cols
-        if len(line) != nc:
+        if len(list(line)) != nc:
             LOG.error('Cost Array: Incorrect # of cols.')
             return False
         # check value
-        for j in range(len(line)):
+        for j in range(len(list(line))):
             if cost_array[i - 1][j] != line[j]:
                 LOG.error('Cost Array: Value mismatch at ({}, {})'.format(
                     i - 1, j))

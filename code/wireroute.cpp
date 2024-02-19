@@ -187,5 +187,5 @@ int main(int argc, char *argv[]) {
 validate_wire_t Wire::to_validate_format(void) const {
   /* TODO(student): Implement this if you want to use the wr_checker. */
   /* See wireroute.h for details on validate_wire_t. */
-  return validate_wire_t{};
+  throw std::logic_error("to_validate_format not implemented.");
 }
