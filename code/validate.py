@@ -15,9 +15,15 @@ optional arguments:
   -h, --help            show this help message and exit
   -r ROUTE              Wire Routes for each wire
   -c COST               Cost Array
+  -v                    Show all mismatched wires
 '''
 
+verbose = False
+MISMATCH_REPORT_CNT = 6
+mismatch_cnt = 0
+
 def parse_args():
+    global verbose
     args = sys.argv
     if '-h' in args or '--help' in args:
         print (help_message)
@@ -25,6 +31,8 @@ def parse_args():
     if '-r' not in args or '-c' not in args:
         print (help_message)
         sys.exit(1)
+    if '-v' in args:
+        verbose = True
     parsed = {}
     parsed['route'] = args[args.index('-r') + 1]
     parsed['cost'] = args[args.index('-c') + 1]
@@ -37,9 +45,12 @@ def main(args):
         LOG.info('Validate succeeded.')
     else:
         LOG.info('Validation failed.')
+        if (not verbose and mismatch_cnt >= MISMATCH_REPORT_CNT):
+            LOG.info('Showing truncated report. To see a list of all mismatches, run with \'-v\'.')
 
 
 def validate(args):
+    global mismatch_cnt
     route = open(args['route'], 'r')
     # calculate cost matrix
     lines = route.readlines()
@@ -59,12 +70,12 @@ def validate(args):
     cost_array = [[0] * n for _ in range(m)]
     for i in range(2, len(lines)):
         wire = lines[i]
-        path = map(int, wire.split())
-        if len(list(path)) % 2 != 0:
+        path = list(map(int, wire.split()))
+        if len(path) % 2 != 0:
             LOG.error('Route: end points doesn\'t come in pairs in line {}'.
                       format(i + 2))
             return False
-        points = [(path[2 * i], path[2 * i + 1]) for i in range(len(list(path)) // 2)]
+        points = [(path[2 * i], path[2 * i + 1]) for i in range(len(path) // 2)]
         for j in range(len(points) - 1):
             add_cost(cost_array, points[j], points[j + 1])
             # remove the cost of the bending end points
@@ -83,18 +94,20 @@ def validate(args):
         LOG.error('Cost Array: Incorrect # of rows.')
         return False
     for i in range(1, len(lines)):
-        line = map(int, lines[i].split())
+        line = list(map(int, lines[i].split()))
         # check # cols
-        if len(list(line)) != nc:
+        if len(line) != nc:
             LOG.error('Cost Array: Incorrect # of cols.')
             return False
         # check value
-        for j in range(len(list(line))):
+        for j in range(len(line)):
             if cost_array[i - 1][j] != line[j]:
-                LOG.error('Cost Array: Value mismatch at ({}, {})'.format(
-                    i - 1, j))
-                return False
-    return True
+                LOG.error('Cost Array: Value mismatch at ({}, {}); expected {}, got {}'.format(
+                    i - 1, j, cost_array[i - 1][j], line[j]))
+                mismatch_cnt += 1
+                if ((not verbose) and mismatch_cnt >= MISMATCH_REPORT_CNT):
+                    return False
+    return (mismatch_cnt == 0)
 
 
 def add_cost(cost_array, p1, p2):
